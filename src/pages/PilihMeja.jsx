@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react"
 import TombolMeja from "../components/TombolMeja"
 import supabase from "../utils/supabase"
-import { redirect } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
 export default function PilihMeja () {
     const [meja, setMeja] = useState([])
     const [loading, setLoading] = useState(1)
     const [atasNama, setAtasnama] = useState("")
     const [mejaPelanggan, setMejaPelanggan] = useState("")
+    const navigate = useNavigate()
 
     useEffect(() => {
         const getNotes = async () => {
@@ -23,7 +24,7 @@ export default function PilihMeja () {
 
 
     const userDataLocal = localStorage.getItem("id")
-    if(userDataLocal) {redirect("/menu")}
+    if(userDataLocal) {navigate("/menu")}
     
     
     async function daftar(){
@@ -41,7 +42,7 @@ export default function PilihMeja () {
         const {error: e1} = await supabase.from("Meja").update({available: false, pelanggan: userData.nama}).eq("meja", mejaPelanggan)
         const {error: e2} = await supabase.from("Pelanggan").insert({id, ...userData})
         if(e1 || e2) {alert("maaf, terjadi kesalahan"); return}
-        location.href = "/menu"
+        navigate("/menu")
     }
 
     if(loading) return (
