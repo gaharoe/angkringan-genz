@@ -2,6 +2,7 @@ import {Routes, Route} from "react-router-dom"
 import Menu from "./pages/Menu"
 import PilihMeja from "./pages/PilihMeja"
 import Status from "./pages/Status"
+import "./App.css"
 
 export default function App() {
   return (

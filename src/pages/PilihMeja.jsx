@@ -8,24 +8,31 @@ export default function PilihMeja () {
     const [loading, setLoading] = useState(1)
     const [atasNama, setAtasnama] = useState("")
     const [mejaPelanggan, setMejaPelanggan] = useState("")
+    const [User, setUser] = useState(null)
+    const [pelanggan, setPelanggan] = useState([])
     const navigate = useNavigate()
 
-    useEffect(() => {
-        const getNotes = async () => {
-            const { data, error } = await supabase.from("Meja").select("*").order("meja", {ascending: true})
-            if (error) {console.error(error);} 
-            else {
-                setMeja(data);
-                setLoading(false)
-            }
-        };
-        getNotes();
-    }, []);
-
-
-    const userDataLocal = localStorage.getItem("id")
-    if(userDataLocal) {navigate("/menu")}
+    async function getMeja () {
+        const { data, error } = await supabase.from("Meja").select("*").order("meja", {ascending: true})
+        if (error) {console.error(error);} 
+        else {
+            setMeja(data);
+        }
+    };
     
+    async function getPelanggan(){
+        const { data, error } = await supabase.from("Pelanggan").select("*").order("meja", {ascending: true})
+        if (error) {console.error(error);} 
+        else {
+            setPelanggan(data);
+        }
+    }
+
+    async function getUser(id) {
+        const {data, error} = await supabase.from("Pelanggan").select("*").eq("id", id).single()
+        if(error) {setUser(0); return}
+        setUser(data);
+    }
     
     async function daftar(){
         if(!atasNama) {alert("isi nama anda terlebih dahulu"); return}
@@ -33,7 +40,8 @@ export default function PilihMeja () {
         const id = Date.now()
         const userData = {
             nama: atasNama,
-            meja: mejaPelanggan
+            meja: mejaPelanggan,
+            status: 1
         }
         localStorage.setItem("id", id)
         localStorage.setItem("nama", userData.nama)
@@ -45,6 +53,21 @@ export default function PilihMeja () {
         navigate("/menu")
     }
 
+    useEffect(() => {
+        async function start(){
+            const userDataLocal = localStorage.getItem("id")
+            if(userDataLocal) {
+                await getUser(userDataLocal)
+                if(User) {navigate("/menu"); return}
+            }
+            getMeja()
+            getPelanggan()
+            setLoading(false)
+        }
+        start()
+        console.log(pelanggan)
+    }, [])
+
     if(loading) return (
         <div className="fixed z-50 top-0 bottom-0 left-0 right-0 flex justify-center items-center">
             loading
@@ -52,21 +75,35 @@ export default function PilihMeja () {
     )
 
     return (
-        <div className="w-screen h-screen flex flex-col items-center justify-center gap-10">
-            <div className="flex flex-col gap-2 w-70">
-                <label htmlFor="nama">Atas nama</label>
-                <input onChange={(e) => setAtasnama(e.target.value)} className="border-2 border-amber-500 px-3 py-2 rounded-md outline-none" type="text" name="nama" id="nama" placeholder="Masukkan nama anda"/>
-            </div>
-            <div>
-                <p className="mb-2">Pilih Nomor Meja</p>
-                <div className="flex flex-wrap gap-2 w-70">
-                    {meja.map(m => (
-                        <TombolMeja key={m.meja} avail={m.available} index={m.meja}  tableSelect={mejaPelanggan} setTableSelect={setMejaPelanggan}/>
-                    ))}
+        <div className="fixed top-0 bottom-0 left-0 right-0 flex-col flex items-center p-15 gap-5 bg-gray-100">
+            <div className="flex flex-col gap-10 w-fit bg-white p-5 rounded-5 shadow-md">
+                <div className="flex flex-col gap-2 w-70">
+                    <label htmlFor="nama" className="zalando text-gray-700">Atas nama</label>
+                    <input onChange={(e) => setAtasnama(e.target.value)} className="border-2 border-amber-500 px-3 py-2 rounded-md outline-none" type="text" name="nama" id="nama" placeholder="Masukkan nama anda"/>
                 </div>
+                <div>
+                    <p className="mb-2 zalando text-gray-700">Pilih Nomor Meja</p>
+                    <div className="flex flex-wrap gap-2 w-70">
+                        {meja.map(m => (
+                            <TombolMeja key={m.meja} avail={m.available} index={m.meja}  tableSelect={mejaPelanggan} setTableSelect={setMejaPelanggan}/>
+                        ))}
+                    </div>
+                </div>
+
+                <button onClick={daftar} className="bg-amber-500 text-white w-70 py-2 rounded">Daftar</button>
             </div>
 
-            <button onClick={daftar} className="bg-amber-500 text-white w-70 py-2 rounded">Daftar</button>
+            <div className=" zalando bg-white shadow-md w-80 p-5">
+                {pelanggan.map(p => (
+                    <div className="p-2 shadow-sm/20 rounded mb-3">
+                        <div className="flex gap-2 items-center">
+                            <div className={`w-2 rounded-full h-2 ${p.status == 1 ? "bg-green-500":"bg-amber-400"}`}></div>
+                            <p className="text-xs">Meja {p.meja}</p>
+                        </div>
+                        <p className="">{p.nama}</p>
+                    </div>
+                ))}
+            </div>
         </div>
     )
 }
